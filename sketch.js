@@ -16,6 +16,8 @@ let evaluationPlayer;
 let r;
 let g;
 let b;
+
+// shuffle order to create player's preferred position list - except bench B  
 function assignRandomPrefs() {
   temp = shuffle(Positions);
   temp.splice(temp.indexOf("B"), 1);
@@ -241,7 +243,7 @@ function checkCompletion(game) {
       }
       playerScores.push(playerScore);
     }
-    if (!scoresAreBalanced(playerScores)) {
+    if (!scoresAreBalanced(playerScores) || Players.map( player => benchDistributionExceeded(player) )[0] != undefined) {
       return result;
     }
   }
@@ -256,6 +258,8 @@ let scores = {
 };
 
 function scoresAreBalanced(scores) {
+  
+  let areBalanced = true;
   // TODO ensure preference scores are balanced
   // what's a legitimate high score? what is a fair distribution of scores given that preferences may cause competition for placement?
   // how many available favorite, second favorite, and so on positions for each player per game?
@@ -264,7 +268,7 @@ function scoresAreBalanced(scores) {
 
   let perfectGameScore = periodCount * sumRank(Positions);
 // scores as a percent of perfect
-// high scoew
+// high score
 // low score
 // largest difference.... is high... how many more times can they get a favorite placing before it's imbalanced?
   let playerFavoritePositions = [];
@@ -282,19 +286,19 @@ function scoresAreBalanced(scores) {
   for (let position of Positions) {
     let playersWhoFavorCurrentPosition = [];
     for (let player of Players) {
-    if(player.pref[1] === position) {
-      playersWhoFavorCurrentPosition.push(player);
-    }
+      if(player.pref[1] === position) {
+        playersWhoFavorCurrentPosition.push(player);
+      }
     }
     playerSecondPositions.push(playersWhoFavorCurrentPosition);
   }
 
-  return true;
+  return areBalanced;
 }
 
 function benchDistributionExceeded(player) {
   
-
+  let exceeded = false;
   let placedBenches = [];
 
   for (let i = 0; i < periodCount; i++) {
@@ -310,7 +314,7 @@ for (let i = 0; i < placedBenches.length; i++) {
 
 let minBenchesPerPlayer = getMinBenchesPerPlayer();
   
-// loopp through counts and do what you need to do.
+// loop through counts and do what you need to do.
 
   const playerNotBeenMinBenchedCount = Players.length - minBenchedPlayers.length;
   if (!playerNotBeenMinBenchedCount || playerNotBeenMinBenchedCount === 0) {
@@ -324,8 +328,10 @@ let minBenchesPerPlayer = getMinBenchesPerPlayer();
     .filter(player => player.benchIds.length >= (minBenchesPerPlayer + 1)));
 
   if (maxBenchedPlayers.length < playerGetsExtraBenchCount) {
-    return maxBenchedPlayers.filter(player => player.id === currentPlayer.id).length > 0;
+    exceeded = maxBenchedPlayers.filter(player => player.id === currentPlayer.id).length > 0;
   }
+
+  return exceeded;
 }
 
 function getMinBenchesPerPlayer() {
@@ -337,7 +343,7 @@ function getMinBenchesPerPlayer() {
 function sumRank(arr){
   let sum = 0;
   for (let i = 0; i < arr.length; i ++){
-sum = sum + i + 1;
+    sum = sum + i + 1;
 
   }
   return sum;
